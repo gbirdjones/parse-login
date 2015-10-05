@@ -3480,9 +3480,7 @@ function drainQueue() {
         currentQueue = queue;
         queue = [];
         while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
+            currentQueue[queueIndex].run();
         }
         queueIndex = -1;
         len = queue.length;
@@ -3534,6 +3532,7 @@ process.binding = function (name) {
     throw new Error('process.binding is not supported');
 };
 
+// TODO(shtylman)
 process.cwd = function () { return '/' };
 process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
@@ -32597,14 +32596,80 @@ module.exports = React.createClass({
 				React.createElement(
 					"h1",
 					null,
-					"Login"
+					"Are you sure you want to log out?"
+				),
+				React.createElement(
+					"button",
+					{ onClick: this.logout },
+					"confirm"
 				)
 			)
 		);
+	},
+	logout: function logout() {
+		Parse.User.logOut();
+		this.props.router.navigate('login', { trigger: true });
 	}
 });
 
 },{"react":159}],163:[function(require,module,exports){
+"use strict";
+
+var React = require('react');
+
+module.exports = React.createClass({
+	displayName: "exports",
+
+	render: function render() {
+		return React.createElement(
+			"div",
+			{ className: "container" },
+			React.createElement(
+				"div",
+				{ className: "row" },
+				React.createElement(
+					"h1",
+					null,
+					"Login"
+				),
+				React.createElement(
+					"form",
+					{ onSubmit: this.onLogin },
+					React.createElement("input", { type: "text", className: "textInput", ref: "email", placeholder: "email" }),
+					React.createElement("input", { type: "password", className: "textInput", ref: "password", placeholder: "password" }),
+					React.createElement(
+						"div",
+						{ className: "row" },
+						React.createElement(
+							"button",
+							{ className: "waves-effect waves-light btn" },
+							"Register"
+						)
+					)
+				)
+			)
+		);
+	},
+	onLogin: function onLogin(e) {
+		var _this = this;
+
+		e.preventDefault();
+		console.log(Parse.User.current());
+		Parse.User.logIn(this.refs.email.getDOMNode().value, this.refs.password.getDOMNode().value, {
+			success: function success(user) {
+				console.log(user);
+				_this.props.router.navigate('dashboard', { trigger: true });
+			},
+			error: function error(user, _error) {
+				_this.setState({
+					error: _error.message
+				});
+			}
+		});
+	}
+});
+
+},{"react":159}],164:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -32659,13 +32724,22 @@ module.exports = React.createClass({
 						{ href: "#register" },
 						"Register"
 					)
+				),
+				React.createElement(
+					"li",
+					null,
+					React.createElement(
+						"a",
+						{ href: "#logout" },
+						"Logout"
+					)
 				)
 			)
 		);
 	}
 });
 
-},{"react":159}],164:[function(require,module,exports){
+},{"react":159}],165:[function(require,module,exports){
 "use strict";
 
 var React = require('react');
@@ -32746,11 +32820,11 @@ module.exports = React.createClass({
 
 		e.preventDefault();
 		var user = new Parse.User();
-		user.signUp({
-			username: this.refs.email.getDOMNode().value,
-			password: this.refs.password.getDOMNode().value,
-			email: this.refs.email.getDOMNode().value
-		}, {
+		user.set('username', this.refs.email.getDOMNode().value);
+		user.set('password', this.refs.password.getDOMNode().value);
+		user.set('email', this.refs.email.getDOMNode().value);
+		console.log(user);
+		user.signUp(null, {
 			success: function success(u) {
 				_this.props.router.navigate('dashboard', { trigger: true });
 			},
@@ -32763,7 +32837,7 @@ module.exports = React.createClass({
 	}
 });
 
-},{"react":159}],165:[function(require,module,exports){
+},{"react":159}],166:[function(require,module,exports){
 'use strict';
 var React = require('react');
 var Backbone = require('backbone');
@@ -32775,6 +32849,8 @@ var HomeComponent = require('./components/HomeComponent');
 var DashboardComponent = require('./components/DashboardComponent');
 var LoginComponent = require('./components/LoginComponent');
 var RegisterComponent = require('./components/RegisterComponent');
+var LogOutComponent = require('./components/LogOut');
+Parse.initialize('RxMepQLpuFxLifcJN3HKqsWsq6TCJrak7vqlXyci', 'XMlIcffIfaFBuSOb56L2DdXxLjmlTenVUtHkMFEq');
 
 var app = document.getElementById('app');
 
@@ -32785,26 +32861,36 @@ var Router = Backbone.Router.extend({
 		'': 'home',
 		'dashboard': 'dashboard',
 		'login': 'login',
-		'register': 'register'
+		'register': 'register',
+		'logout': 'logout'
 	},
 	home: function home() {
 		React.render(React.createElement(HomeComponent, null), app);
 	},
 	dashboard: function dashboard() {
-		React.render(React.createElement(DashboardComponent, null), app);
+		console.log(Parse.User.current());
+		if (Parse.User.current()) {
+			React.render(React.createElement(DashboardComponent, null), app);
+		} else {
+			window.alert('You need to login or create an account');
+			this.navigate('home', { trigger: true });
+		}
 	},
 	login: function login() {
-		React.render(React.createElement(LoginComponent, null), app);
+		React.render(React.createElement(LoginComponent, { router: r }), app);
 	},
 	register: function register() {
 		React.render(React.createElement(RegisterComponent, { router: r }), app);
+	},
+	logout: function logout() {
+		React.render(React.createElement(LogOutComponent, { router: r }), app);
 	}
 });
 
 var r = new Router();
 Backbone.history.start();
 
-},{"./components/DashboardComponent":160,"./components/HomeComponent":161,"./components/LoginComponent":162,"./components/NavigationComponent":163,"./components/RegisterComponent":164,"backbone":1,"jquery":4,"react":159}]},{},[165])
+},{"./components/DashboardComponent":160,"./components/HomeComponent":161,"./components/LogOut":162,"./components/LoginComponent":163,"./components/NavigationComponent":164,"./components/RegisterComponent":165,"backbone":1,"jquery":4,"react":159}]},{},[166])
 
 
 //# sourceMappingURL=bundle.js.map

@@ -40,12 +40,12 @@ module.exports = React.createClass({
 	onRegister: function(e) {
 		e.preventDefault();
 		var user = new Parse.User();
-		user.signUp(
-			{
-				username: this.refs.email.getDOMNode().value,
-				password: this.refs.password.getDOMNode().value,
-				email: this.refs.email.getDOMNode().value
-			},
+		user.set('username', this.refs.email.getDOMNode().value);
+		user.set('password', this.refs.password.getDOMNode().value);
+		user.set('email', this.refs.email.getDOMNode().value);
+		console.log(user);
+		user.signUp(null,
+			
 			{
 				success: (u) => {
 					this.props.router.navigate('dashboard', {trigger: true});
